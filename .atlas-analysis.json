@@ -1,0 +1,84 @@
+{
+  "projectType": "saas",
+  "projectName": "Private Chat",
+  "projectDescription": "A real-time, self-destructing chat application with WebSocket support and automatic room expiration.",
+  "theme": "palm",
+  "primaryColor": "#22c55e",
+  "lightColor": "#4ade80",
+  "darkColor": "#16a34a",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "how-it-works"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/real-time-messaging",
+              "features/self-destructing-rooms",
+              "features/room-management",
+              "features/authentication"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/environment-variables",
+              "deployment/vercel",
+              "deployment/upstash-setup"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Technical Reference",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "technical/architecture-overview",
+              "technical/websocket-implementation",
+              "technical/redis-data-model"
+            ]
+          },
+          {
+            "group": "API",
+            "pages": [
+              "api/overview",
+              "api/rooms",
+              "api/messages"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Real-time messaging with WebSocket support",
+    "Self-destructing chat rooms with configurable TTL",
+    "Two-participant limit per room",
+    "Cookie-based authentication",
+    "Upstash Redis for message persistence",
+    "Anonymous username generation",
+    "Room link sharing",
+    "Manual room destruction"
+  ],
+  "publicApiSurface": [
+    "POST /api/room/create - Create a new chat room",
+    "GET /api/room/ttl - Get room time-to-live",
+    "DELETE /api/room - Destroy a room",
+    "POST /api/messages - Send a message",
+    "GET /api/messages - Retrieve room messages",
+    "WebSocket Events: chat.message, chat.destroy",
+    "RealtimeClient: useRealtime hook",
+    "Authentication: Cookie-based token system"
+  ]
+}
