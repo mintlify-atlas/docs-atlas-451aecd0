@@ -103,27 +103,34 @@ If your cookie is missing or invalid, you'll get a 401 error when trying to acce
 
 ## Username generation
 
-Users don't create accounts, so they need anonymous identities. Usernames are generated client-side:
+Users don't create accounts, so they need anonymous identities. Usernames are automatically generated using a combination of random words, animals, and a unique ID:
 
 ```typescript src/hooks/use-username.ts
-export const useUsername = () => {
-  const [username, setUsername] = useState<string>("anonymous");
+const randomWord = async (): Promise<string> => {
+  const response = await fetch('https://random-word-api.herokuapp.com/word');
+  const word = await response.json();
+  return word[0];
+};
 
-  useEffect(() => {
-    const stored = getUsername();
-    setUsername(stored);
-  }, []);
+const randomAnimal = async () => {
+  const response = await fetch('https://random-animal-api.vercel.app/api/random-animal');
+  const word = await response.json();
+  return word["city"].toLowerCase().split(" ")[0];
+};
 
-  return { username };
+const generateUsername = (randomWord: string, randomAnimal: string) => {
+  return `${randomWord}-${randomAnimal}-${nanoid(5)}`;
 };
 ```
 
+Example generated username: `clever-fox-aB3d9`
+
 Usernames are:
 
-- Stored in localStorage for persistence across sessions
-- Generated once per browser/device
-- Not validated server-side (sender validation only checks max length)
-- Displayed in the UI to differentiate "YOU" from other participants
+- **Generated once** - On first visit, combining a random word + random animal + 5-character ID
+- **Stored in localStorage** - Persists across browser sessions using the key `custom-username`
+- **Not validated server-side** - Only the max length (100 characters) is validated
+- **Purely cosmetic** - Used only for display in the UI to differentiate "YOU" from other participants
 
 <Tip>
 Usernames are purely cosmetic. Authentication is handled entirely via the cookie token.
