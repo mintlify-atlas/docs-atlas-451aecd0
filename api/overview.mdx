@@ -1,0 +1,79 @@
+---
+title: API overview
+description: Introduction to the Private Chat API, authentication, and base endpoints
+---
+
+The Private Chat API enables you to create ephemeral chat rooms, send messages, and manage room lifecycles programmatically.
+
+## Base URL
+
+All API endpoints are relative to your application's base URL:
+
+```
+https://your-domain.com/api
+```
+
+For local development:
+
+```
+http://localhost:3000/api
+```
+
+## Authentication
+
+Most API endpoints require authentication using a token-based system. Authentication is handled through cookies.
+
+### Authentication requirements
+
+- **Room ID**: A unique identifier for the chat room (passed as query parameter)
+- **Auth token**: A token stored in the `x-auth-token` cookie that identifies the user
+
+### Unauthenticated endpoints
+
+- `POST /api/room/create` - Creates a new room without authentication
+
+### Authenticated endpoints
+
+All other endpoints require:
+- Valid `roomId` query parameter
+- Valid `x-auth-token` cookie
+- The token must be in the room's connected users list
+
+If authentication fails, you'll receive a `401 Unauthorized` response:
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+## Rate limiting and TTL
+
+Rooms are ephemeral and expire after 10 minutes of inactivity. When you send messages or interact with a room, the TTL (time to live) is maintained but not extended.
+
+## Error handling
+
+The API returns standard HTTP status codes:
+
+- `200` - Success
+- `401` - Unauthorized (missing or invalid authentication)
+- `500` - Server error
+
+Error responses include a descriptive message:
+
+```json
+{
+  "error": "Room does not exist"
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Rooms" icon="door-open" href="/api/rooms">
+    Create and manage chat rooms
+  </Card>
+  <Card title="Messages" icon="message" href="/api/messages">
+    Send and retrieve messages
+  </Card>
+</CardGroup>

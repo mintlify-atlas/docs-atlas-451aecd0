@@ -1,0 +1,159 @@
+---
+title: Real-time messaging
+description: Learn how Private Chat uses WebSockets to deliver instant, bidirectional communication between participants.
+---
+
+Private Chat uses Upstash Realtime to provide instant, bidirectional communication between room participants. Messages are delivered in real-time without polling or page refreshes.
+
+## WebSocket architecture
+
+The real-time system is built on Upstash Realtime, which provides WebSocket connections backed by Redis pub/sub.
+
+### Event schema
+
+All real-time events are typed using Zod schemas defined in `src/lib/realtime.ts`:
+
+```typescript src/lib/realtime.ts
+const schema = {
+  chat: {
+    message: z.object({
+      id: z.string(),
+      sender: z.string(),
+      text: z.string(),
+      roomId: z.string(),
+      token: z.string().optional(),
+    }),
+    destroy: z.object({
+      isDestroyed: z.literal(true),
+    }),
+  },
+};
+
+export const realtime = new Realtime({ schema, redis });
+export type RealtimeEvents = InferRealtimeEvents<typeof realtime>;
+```
+
+## Client-side implementation
+
+The frontend uses the `useRealtime` hook to subscribe to room events:
+
+```typescript src/app/room/[roomId]/page.tsx
+useRealtime({
+  channels: [roomId],
+  events: ["chat.message", "chat.destroy"],
+  onData: ({ event }) => {
+    if (event === "chat.message") {
+      refetch();
+    }
+
+    if (event === "chat.destroy") {
+      router.push("/?alert=destroyed-true");
+    }
+  },
+});
+```
+
+<Info>
+The `useRealtime` hook automatically manages WebSocket connections and reconnection logic.
+</Info>
+
+## Event types
+
+### chat.message
+
+Emitted when a user sends a message. Contains the full message object:
+
+```json
+{
+  "id": "V1StGXR8_Z5jdHi6B-myT",
+  "sender": "anonymous-fox-42",
+  "text": "Hello!",
+  "roomId": "xQp9k2Lm",
+  "timestamp": 1678901234567
+}
+```
+
+When this event is received, the client refetches the message list to display the new message.
+
+### chat.destroy
+
+Emitted when a room is manually destroyed. Contains:
+
+```json
+{
+  "isDestroyed": true
+}
+```
+
+When this event is received, all connected clients are immediately redirected to the home page with a destruction alert.
+
+## Server-side emission
+
+Messages are emitted from the API endpoints using the Realtime client:
+
+```typescript src/app/api/[[...slugs]]/route.ts
+// Send message event
+await realtime.channel(roomId).emit("chat.message", message);
+
+// Send destroy event
+await realtime
+  .channel(auth.roomId)
+  .emit("chat.destroy", { isDestroyed: true });
+```
+
+## Message delivery
+
+<Steps>
+  <Step title="User sends message">
+    Client calls `POST /api/messages` with message text.
+  </Step>
+  
+  <Step title="Server saves to Redis">
+    Message is stored in `messages:{roomId}` list with TTL.
+  </Step>
+  
+  <Step title="Server emits event">
+    `chat.message` event is broadcast to all subscribers of the room channel.
+  </Step>
+  
+  <Step title="Clients receive event">
+    WebSocket delivers event to all connected clients instantly.
+  </Step>
+  
+  <Step title="UI updates">
+    Each client refetches messages and displays the new message.
+  </Step>
+</Steps>
+
+## Connection management
+
+The Upstash Realtime library handles:
+
+- **Automatic reconnection** - If the WebSocket disconnects, it automatically reconnects
+- **Message buffering** - Messages sent during disconnection are queued
+- **Type safety** - Full TypeScript support with inferred event types
+- **Channel isolation** - Each room is a separate channel, messages never leak between rooms
+
+<Tip>
+Messages are delivered with low latency (typically under 100ms) thanks to Upstash's global edge network.
+</Tip>
+
+## Privacy considerations
+
+The real-time system respects privacy:
+
+- Room IDs are used as channel names, ensuring message isolation
+- The `token` field is filtered server-side before emission
+- WebSocket connections require valid room access
+- All messages are encrypted in transit via WSS
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Self-destructing rooms" icon="bomb" href="/features/self-destructing-rooms">
+    Learn about automatic room expiration
+  </Card>
+  <Card title="WebSocket implementation" icon="code" href="/technical/websocket-implementation">
+    Deep dive into the technical architecture
+  </Card>
+</CardGroup>

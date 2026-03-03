@@ -1,0 +1,178 @@
+---
+title: Deploy to Vercel
+description: Step-by-step guide to deploy Private Chat on Vercel
+---
+
+Vercel is the recommended platform for deploying Private Chat. This guide walks you through the entire deployment process.
+
+## Prerequisites
+
+Before deploying, make sure you have:
+
+- A [Vercel account](https://vercel.com/signup)
+- An [Upstash Redis database](/deployment/upstash-setup) with credentials
+- Your project code in a Git repository (GitHub, GitLab, or Bitbucket)
+
+## Deploy from Git
+
+<Steps>
+  <Step title="Import your repository">
+    Go to [vercel.com/new](https://vercel.com/new) and click "Import Project".
+    
+    If this is your first time, you'll need to connect your Git provider (GitHub, GitLab, or Bitbucket).
+  </Step>
+  
+  <Step title="Select your repository">
+    Choose the repository containing your Private Chat project.
+    
+    <Info>
+      If you don't see your repository, you may need to configure Vercel's access to your Git provider.
+    </Info>
+  </Step>
+  
+  <Step title="Configure project">
+    Vercel will auto-detect that this is a Next.js project. The default settings should work:
+    
+    - **Framework Preset**: Next.js
+    - **Root Directory**: `./` (or your source directory if different)
+    - **Build Command**: `next build`
+    - **Output Directory**: `.next`
+    
+    Leave these as default unless you have a custom setup.
+  </Step>
+  
+  <Step title="Add environment variables">
+    Click "Environment Variables" to expand the section.
+    
+    Add your Upstash Redis credentials:
+    
+    <CodeGroup>
+    ```bash Production
+    UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+    UPSTASH_REDIS_REST_TOKEN=your_token_here
+    ```
+    
+    ```bash Preview & Development
+    UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+    UPSTASH_REDIS_REST_TOKEN=your_token_here
+    ```
+    </CodeGroup>
+    
+    <Warning>
+      Make sure to add these variables to all environments (Production, Preview, and Development) where you want the app to function.
+    </Warning>
+  </Step>
+  
+  <Step title="Deploy">
+    Click "Deploy" and wait for Vercel to build and deploy your application.
+    
+    This usually takes 1-3 minutes. You'll see real-time build logs as your project is deployed.
+  </Step>
+  
+  <Step title="Visit your deployment">
+    Once deployment is complete, Vercel will provide a URL for your application.
+    
+    Click "Visit" to open your deployed Private Chat application.
+  </Step>
+</Steps>
+
+## Automatic deployments
+
+Vercel automatically deploys your application when you push changes to your Git repository:
+
+- **Production**: Deployments from your main branch (usually `main` or `master`)
+- **Preview**: Deployments from pull requests and other branches
+
+Each preview deployment gets a unique URL for testing before merging to production.
+
+## Custom domain
+
+To add a custom domain to your deployment:
+
+<Steps>
+  <Step title="Open project settings">
+    In your Vercel dashboard, select your project and go to Settings → Domains.
+  </Step>
+  
+  <Step title="Add domain">
+    Enter your domain name and click "Add".
+  </Step>
+  
+  <Step title="Configure DNS">
+    Vercel will provide DNS records to add to your domain registrar:
+    
+    - **A Record**: Points to Vercel's IP address
+    - **CNAME Record**: For subdomains
+    
+    Follow the instructions for your specific registrar.
+  </Step>
+  
+  <Step title="Wait for verification">
+    DNS propagation can take up to 48 hours, but usually completes within a few minutes.
+    
+    Vercel will automatically verify your domain and issue an SSL certificate.
+  </Step>
+</Steps>
+
+## Environment variables management
+
+To update environment variables after deployment:
+
+<Steps>
+  <Step title="Navigate to settings">
+    In your Vercel project, go to Settings → Environment Variables.
+  </Step>
+  
+  <Step title="Edit or add variables">
+    You can:
+    - Add new variables
+    - Edit existing values
+    - Delete variables
+    - Set different values for Production, Preview, and Development
+  </Step>
+  
+  <Step title="Redeploy">
+    Changes to environment variables require a redeploy to take effect.
+    
+    Go to Deployments, click the three dots next to the latest deployment, and select "Redeploy".
+  </Step>
+</Steps>
+
+<Note>
+  Environment variable changes are not applied to existing deployments automatically. You must redeploy for the changes to take effect.
+</Note>
+
+## Troubleshooting
+
+### Build fails
+
+If your build fails:
+
+1. Check the build logs in Vercel for error messages
+2. Ensure all environment variables are set correctly
+3. Verify your code builds locally with `npm run build`
+4. Check that all dependencies are listed in `package.json`
+
+### Runtime errors
+
+If your app builds but has runtime errors:
+
+1. Check the Function Logs in your Vercel dashboard
+2. Verify your Upstash Redis credentials are correct
+3. Test your Redis connection locally
+4. Ensure your Upstash database region matches or is close to your Vercel deployment region
+
+### Real-time messaging not working
+
+If real-time features aren't working:
+
+1. Verify `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set
+2. Check that your Upstash database is active and not paused
+3. Review Function Logs for WebSocket connection errors
+4. Test the `/api/realtime` endpoint directly
+
+## Next steps
+
+- Set up [custom domains](https://vercel.com/docs/concepts/projects/custom-domains)
+- Configure [preview deployments](https://vercel.com/docs/concepts/deployments/preview-deployments)
+- Monitor [analytics and performance](https://vercel.com/docs/concepts/analytics)

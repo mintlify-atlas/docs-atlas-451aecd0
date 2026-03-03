@@ -1,0 +1,151 @@
+---
+title: Self-destructing rooms
+description: Understand how Private Chat automatically deletes rooms and all messages after 10 minutes.
+---
+
+Every chat room in Private Chat has a built-in expiration mechanism. Rooms automatically self-destruct after 10 minutes, permanently deleting all messages and metadata.
+
+## Time to live (TTL)
+
+Rooms are created with a fixed TTL of 600 seconds (10 minutes):
+
+```typescript src/app/api/[[...slugs]]/route.ts
+const ROOM_TTL_SECONDS = 60 * 10;
+
+await redis.hset(`meta:${roomId}`, {
+  connected: [],
+  createdAt: Date.now(),
+});
+
+await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
+```
+
+<Warning>
+The TTL is **not renewable**. Once a room is created, it will expire in exactly 10 minutes regardless of activity.
+</Warning>
+
+## Countdown timer
+
+Users see a live countdown timer showing the remaining time:
+
+```typescript src/app/room/[roomId]/page.tsx
+function formatTimeRemaining(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+const [initialTtl, setInitialTtl] = useState<number | null>(null);
+const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+const timeRemaining = initialTtl !== null 
+  ? Math.max(0, initialTtl - elapsedSeconds) 
+  : null;
+```
+
+The timer:
+- Fetches the initial TTL from the server via `GET /api/room/ttl`
+- Decrements locally every second for smooth UI updates
+- Turns red when less than 60 seconds remain
+- Redirects users when it reaches zero
+
+## Automatic expiration
+
+When the TTL expires, Redis automatically deletes:
+
+- `meta:{roomId}` - Room metadata and participant list
+- `messages:{roomId}` - All chat messages
+- Any other room-associated keys
+
+<Info>
+Deletion happens at the Redis level, so no application code is needed. The data is gone permanently.
+</Info>
+
+### Client-side handling
+
+When the timer expires on the client:
+
+```typescript src/app/room/[roomId]/page.tsx
+useEffect(() => {
+  if (initialTtl === null) return;
+
+  if (initialTtl <= 0) {
+    router.push("/?alert=timer-expired");
+    return;
+  }
+
+  const interval = setInterval(() => {
+    setElapsedSeconds((prev) => {
+      const newElapsed = prev + 1;
+      if (newElapsed >= initialTtl) {
+        clearInterval(interval);
+        router.push("/?alert=timer-expired");
+      }
+      return newElapsed;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [initialTtl, router]);
+```
+
+Users are redirected to the home page with an "TIMER EXPIRED" alert.
+
+## TTL synchronization
+
+When new messages are sent, the TTL is synchronized across all Redis keys:
+
+```typescript src/app/api/[[...slugs]]/route.ts
+const remaining = await redis.ttl(`meta:${roomId}`);
+
+await redis.expire(`messages:${roomId}`, remaining);
+await redis.expire(`history:${roomId}`, remaining);
+await redis.expire(roomId, remaining);
+```
+
+This ensures all room data expires at the same time, preventing orphaned records.
+
+## Manual destruction
+
+Users can also manually destroy a room before the timer expires:
+
+```typescript src/app/room/[roomId]/page.tsx
+const { mutate: destroyRoom } = useMutation({
+  mutationFn: async () => {
+    await client.room.delete(null, { query: { roomId } });
+  },
+});
+```
+
+Clicking the "DESTROY NOW" button:
+
+1. Emits a `chat.destroy` event to all connected clients
+2. Deletes all Redis keys immediately
+3. Redirects all participants to the home page
+
+<Tip>
+Manual destruction is useful when a conversation is finished and you want to ensure immediate deletion.
+</Tip>
+
+## Why 10 minutes?
+
+The 10-minute TTL balances:
+
+- **Privacy** - Short enough to minimize data retention
+- **Usability** - Long enough for meaningful conversations
+- **Simplicity** - Fixed duration, no configuration needed
+
+<Info>
+If you need longer conversations, consider forking the project and adjusting `ROOM_TTL_SECONDS` in `src/app/api/[[...slugs]]/route.ts`.
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Room management" icon="door-open" href="/features/room-management">
+    Learn how to create and share rooms
+  </Card>
+  <Card title="Redis data model" icon="database" href="/technical/redis-data-model">
+    See how TTLs are implemented in Redis
+  </Card>
+</CardGroup>

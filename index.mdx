@@ -1,97 +1,87 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: Introduction
+description: Build private, ephemeral chat rooms that self-destruct after 10 minutes. No accounts, no tracking, just secure real-time conversations.
 ---
 
-## Setting up
+## What is Private Chat?
 
-Get your documentation site up and running in minutes.
+Private Chat is a minimalist, privacy-focused messaging application that creates temporary chat rooms for secure conversations. Each room automatically self-destructs after 10 minutes, leaving no trace of your conversation.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Get your local development environment running in under 5 minutes
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="How it works" icon="gears" href="/how-it-works">
+    Understand rooms, self-destruction timers, and real-time messaging
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Real-time messaging" icon="comments" href="/features/real-time-messaging">
+    WebSocket-powered instant message delivery with Upstash Realtime
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Deploy to Vercel" icon="cloud" href="/deployment/vercel">
+    Deploy your own instance to production in minutes
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Core features
 
-Everything you need to create world-class documentation.
+<CardGroup cols={3}>
+  <Card title="Zero persistence" icon="trash">
+    Messages vanish after 10 minutes. No databases, no logs, no history.
+  </Card>
+  <Card title="No accounts" icon="user-slash">
+    Generate anonymous usernames instantly. No registration required.
+  </Card>
+  <Card title="Instant rooms" icon="door-open">
+    Create sharable chat rooms with a single click. Share the URL to invite others.
+  </Card>
+  <Card title="Real-time sync" icon="bolt">
+    Messages appear instantly across all connected clients via WebSockets.
+  </Card>
+  <Card title="Self-destruct" icon="bomb">
+    Countdown timer shows time remaining. Destroy rooms manually anytime.
+  </Card>
+  <Card title="Cookie-based auth" icon="shield-halved">
+    Secure room access with token-based authentication.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Technology stack
 
-## Need inspiration?
+Private Chat is built with modern web technologies:
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+- **Next.js 16** - React framework with App Router
+- **Upstash Redis** - Serverless Redis for temporary data storage
+- **Upstash Realtime** - WebSocket infrastructure for live updates
+- **Elysia** - Fast, type-safe API routes
+- **TypeScript** - End-to-end type safety
+- **TanStack Query** - Data fetching and caching
+- **Tailwind CSS** - Utility-first styling
+
+## Use cases
+
+<Info>
+  Private Chat is ideal for sensitive conversations that don't need permanent records.
+</Info>
+
+- **Quick team sync** - Share temporary updates without cluttering Slack
+- **Sensitive discussions** - Discuss confidential topics with automatic cleanup
+- **Customer support** - Help customers without storing conversation history
+- **Code sharing** - Share snippets and logs that expire automatically
+- **Interview coordination** - Share meeting links and notes temporarily
+
+## What's next?
+
+<Steps>
+  <Step title="Run locally">
+    Follow the [quickstart guide](/quickstart) to clone and run the project
+  </Step>
+  <Step title="Understand the architecture">
+    Read [how it works](/how-it-works) to learn about the core concepts
+  </Step>
+  <Step title="Configure your instance">
+    Set up [environment variables](/deployment/environment-variables) for your deployment
+  </Step>
+  <Step title="Deploy to production">
+    Launch your instance on [Vercel](/deployment/vercel) or your preferred platform
+  </Step>
+</Steps>

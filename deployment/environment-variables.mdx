@@ -1,0 +1,72 @@
+---
+title: Environment variables
+description: Required environment variables for deploying Private Chat
+---
+
+Private Chat requires environment variables to connect to Upstash Redis for real-time messaging and data storage.
+
+## Required variables
+
+<ParamField path="UPSTASH_REDIS_REST_URL" type="string" required>
+  The REST URL for your Upstash Redis database. This URL is used to connect to your Redis instance via HTTP.
+  
+  Example: `https://your-database.upstash.io`
+</ParamField>
+
+<ParamField path="UPSTASH_REDIS_REST_TOKEN" type="string" required>
+  The authentication token for your Upstash Redis database. This token provides secure access to your Redis instance.
+  
+  Keep this token secret and never commit it to version control.
+</ParamField>
+
+## How they're used
+
+The application uses the `@upstash/redis` SDK which automatically reads these environment variables when you initialize Redis with `Redis.fromEnv()`:
+
+```typescript src/lib/redis.ts
+import { Redis } from "@upstash/redis";
+
+export const redis = Redis.fromEnv()
+```
+
+This Redis instance is then used by the real-time messaging system to:
+- Store and retrieve chat messages
+- Manage room state
+- Handle real-time subscriptions
+
+## Setting environment variables
+
+<Steps>
+  <Step title="Create .env.local file">
+    In your project root, create a `.env.local` file:
+    
+    ```bash
+    touch .env.local
+    ```
+  </Step>
+  
+  <Step title="Add your credentials">
+    Add your Upstash Redis credentials to the file:
+    
+    ```bash .env.local
+    UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+    UPSTASH_REDIS_REST_TOKEN=your_token_here
+    ```
+  </Step>
+  
+  <Step title="Restart your development server">
+    If your dev server is running, restart it to load the new environment variables:
+    
+    ```bash
+    npm run dev
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Never commit your `.env.local` file to version control. Add it to your `.gitignore` file to prevent accidentally exposing your credentials.
+</Warning>
+
+## Getting credentials
+
+To get your Upstash Redis credentials, follow the [Upstash setup guide](/deployment/upstash-setup).

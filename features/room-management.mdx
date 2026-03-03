@@ -1,0 +1,204 @@
+---
+title: Room management
+description: Learn how to create rooms, share links, and manage participants in Private Chat.
+---
+
+Rooms are the core organizing unit in Private Chat. Each room is an isolated chat space with a unique ID, supporting exactly two participants.
+
+## Creating a room
+
+Rooms are created with a single API call:
+
+```typescript src/app/page.tsx
+const { mutate: createRoom } = useMutation({
+  mutationFn: async () => {
+    setLoading(true);
+    const res = await client.room.create.post();
+
+    if (res.status === 200) {
+      router.push(`/room/${res.data?.roomId}`);
+    }
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+  },
+});
+```
+
+The server generates a unique room ID using nanoid:
+
+```typescript src/app/api/[[...slugs]]/route.ts
+const roomId = nanoid();
+
+await redis.hset(`meta:${roomId}`, {
+  connected: [],
+  createdAt: Date.now(),
+});
+
+await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
+
+return { roomId };
+```
+
+<Info>
+Room creation requires no authentication. Anyone can create a room instantly.
+</Info>
+
+## Room ID format
+
+Room IDs are generated using [nanoid](https://github.com/ai/nanoid), which produces:
+
+- Short, URL-safe strings (default 21 characters)
+- Collision-resistant (1 in 1 billion chance even with 1000 IDs/hour for 100 years)
+- No sequential patterns that could leak information
+
+Example room ID: `V1StGXR8_Z5jdHi6B-myT`
+
+## Participant limits
+
+Each room supports **exactly 2 participants**. This limit is enforced in the middleware:
+
+```typescript src/proxy.ts
+const meta = await redis.hgetall<{ connected: string[]; createdAt: number }>(
+  `meta:${roomId}`
+);
+
+// USER IS NOT ALLOWED TO REJOIN
+if (meta.connected.length >= 2) {
+  return NextResponse.redirect(new URL("/?alert=room-full", req.url));
+}
+```
+
+<Warning>
+If a third person tries to join, they'll be redirected to the home page with a "ROOM FULL" error.
+</Warning>
+
+## Sharing room links
+
+To invite someone to a room, share the room URL:
+
+```
+https://your-domain.com/room/V1StGXR8_Z5jdHi6B-myT
+```
+
+Users can copy the link using the "Copy" button in the room header:
+
+```typescript src/app/room/[roomId]/page.tsx
+const copyLink = () => {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url);
+  setCopied(true);
+  toast.success("URL copied to clipboard");
+
+  setTimeout(() => {
+    setCopied(false);
+  }, 2000);
+};
+```
+
+<Tip>
+Send the link through any channel (email, SMS, messaging app). The recipient just needs to open it in their browser.
+</Tip>
+
+## Rejoining rooms
+
+Participants can rejoin a room multiple times using the same link:
+
+```typescript src/proxy.ts
+const existingToken = req.cookies.get("x-auth-token")?.value;
+
+// USER IS ALLOWED TO REJOIN
+if (existingToken && meta.connected.includes(existingToken)) {
+  return NextResponse.next();
+}
+```
+
+If your browser has the authentication cookie, you can:
+
+- Refresh the page without losing access
+- Close the tab and return later (before expiration)
+- Navigate away and come back
+
+<Info>
+Rejoin access lasts until the room expires or you clear your cookies.
+</Info>
+
+## Room destruction
+
+Rooms can be destroyed in two ways:
+
+### Automatic expiration
+
+All rooms automatically self-destruct after 10 minutes. See [Self-destructing rooms](/features/self-destructing-rooms) for details.
+
+### Manual destruction
+
+Any authenticated participant can manually destroy the room:
+
+```typescript src/app/api/[[...slugs]]/route.ts
+.delete(
+  "/",
+  async ({ auth }) => {
+    await realtime
+      .channel(auth.roomId)
+      .emit("chat.destroy", { isDestroyed: true });
+
+    await Promise.all([
+      redis.del(auth.roomId),
+      redis.del(`meta:${auth.roomId}`),
+      redis.del(`messages:${auth.roomId}`),
+    ]);
+  },
+  { query: z.object({ roomId: z.string() }) },
+);
+```
+
+Clicking **DESTROY NOW** will:
+
+1. Broadcast a `chat.destroy` event to all connected clients
+2. Delete all Redis keys associated with the room
+3. Redirect all participants to the home page
+
+<Warning>
+Manual destruction is **irreversible**. All messages are permanently deleted.
+</Warning>
+
+## Room metadata
+
+Each room stores metadata in Redis:
+
+```typescript
+{
+  connected: ["token1", "token2"],  // Array of participant tokens
+  createdAt: 1678901234567           // Unix timestamp
+}
+```
+
+This metadata is stored at `meta:{roomId}` and is used to:
+
+- Track connected participants
+- Enforce the 2-participant limit
+- Validate room access
+
+## Error states
+
+When joining a room, you may encounter:
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| ROOM NOT FOUND | Room expired or never existed | Create a new room |
+| ROOM FULL | 2 participants already connected | Wait for someone to leave or create a new room |
+| ROOM DESTROYED | Room was manually destroyed | Create a new room |
+| TIMER EXPIRED | Room's 10-minute TTL expired | Create a new room |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/features/authentication">
+    Learn how room access is controlled
+  </Card>
+  <Card title="API reference" icon="code" href="/api/rooms">
+    See the room management API endpoints
+  </Card>
+</CardGroup>

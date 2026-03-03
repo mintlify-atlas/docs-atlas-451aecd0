@@ -1,0 +1,123 @@
+---
+title: Upstash setup
+description: Create an Upstash Redis database and get your credentials
+---
+
+Private Chat uses Upstash Redis for real-time messaging and data storage. This guide walks you through creating a database and obtaining your credentials.
+
+## Create an Upstash account
+
+<Steps>
+  <Step title="Sign up for Upstash">
+    Go to [upstash.com](https://upstash.com) and click "Get Started" or "Sign Up".
+    
+    You can sign up with:
+    - GitHub
+    - Google
+    - Email
+  </Step>
+  
+  <Step title="Verify your account">
+    If you signed up with email, verify your account by clicking the link in the confirmation email.
+  </Step>
+</Steps>
+
+## Create a Redis database
+
+<Steps>
+  <Step title="Navigate to Redis">
+    From your Upstash console, click on "Redis" in the top navigation or sidebar.
+  </Step>
+  
+  <Step title="Create database">
+    Click the "Create Database" button.
+  </Step>
+  
+  <Step title="Configure your database">
+    Fill in the database details:
+    
+    - **Name**: Choose a descriptive name (e.g., `private-chat-prod`)
+    - **Type**: Select "Regional" for better latency
+    - **Region**: Choose a region close to where your application will be deployed
+    - **TLS**: Keep enabled for secure connections
+    
+    <Info>
+      If you're deploying on Vercel, choose a region that matches your Vercel deployment region for optimal performance.
+    </Info>
+  </Step>
+  
+  <Step title="Create the database">
+    Click "Create" and wait a few seconds for your database to be provisioned.
+  </Step>
+</Steps>
+
+## Get your credentials
+
+Once your database is created, you need to copy your credentials.
+
+<Steps>
+  <Step title="Open database details">
+    Click on your newly created database to open its details page.
+  </Step>
+  
+  <Step title="Find REST API section">
+    Scroll down to the "REST API" section. You'll see two important values:
+    
+    - **UPSTASH_REDIS_REST_URL**
+    - **UPSTASH_REDIS_REST_TOKEN**
+  </Step>
+  
+  <Step title="Copy credentials">
+    Click the copy button next to each value to copy them to your clipboard.
+    
+    <Warning>
+      Keep your token secret! Never share it publicly or commit it to version control.
+    </Warning>
+  </Step>
+</Steps>
+
+## Add credentials to your project
+
+Now that you have your credentials, you need to add them to your project.
+
+### For local development
+
+Create a `.env.local` file in your project root:
+
+```bash .env.local
+UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_token_here
+```
+
+### For Vercel deployment
+
+Add the environment variables in your Vercel project settings:
+
+1. Go to your project in Vercel
+2. Navigate to Settings → Environment Variables
+3. Add both `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+4. Select which environments they should be available in (Production, Preview, Development)
+
+See the [Vercel deployment guide](/deployment/vercel) for detailed instructions.
+
+## Free tier limits
+
+Upstash offers a generous free tier that includes:
+
+- 10,000 commands per day
+- 256 MB storage
+- All regions available
+- TLS encryption
+
+This is sufficient for development and small production deployments.
+
+<Note>
+  You can monitor your usage in the Upstash console. If you exceed the free tier limits, consider upgrading to a paid plan.
+</Note>
+
+## Next steps
+
+Now that you have your Upstash Redis database set up:
+
+- Learn about [environment variables](/deployment/environment-variables)
+- Deploy your app to [Vercel](/deployment/vercel)
